@@ -4,11 +4,9 @@ import { success } from "../utils/apiResponse.js";
 import { generateSlug } from "../utils/slugify.js";
 
 // Multipart form fields arrive as strings — parse JSON-encoded array/object fields
-// (variants, tags, collections) sent by the admin panel back into real arrays.
 const parseJsonFields = (data, fields) => {
   for (const f of fields) {
     let val = data[f];
-    // multer may wrap a single repeated field as an array of one string
     if (Array.isArray(val) && val.length === 1 && typeof val[0] === "string") {
       val = val[0];
     }
@@ -16,7 +14,6 @@ const parseJsonFields = (data, fields) => {
       try {
         data[f] = JSON.parse(val);
       } catch {
-        // leave as-is (e.g. comma separated fallback for tags)
         if (f === "tags") data[f] = val.split(",").map((t) => t.trim()).filter(Boolean);
         else data[f] = val;
       }
@@ -27,12 +24,14 @@ const parseJsonFields = (data, fields) => {
   return data;
 };
 
+// Cloudinary returns full HTTPS URL in req.file.path
+const filesToUrls = (files) => files.map((f) => f.path);
+
 export const createProduct = async (req, res, next) => {
   const data = parseJsonFields({ ...req.body }, ["variants", "tags", "collections"]);
   if (!data.slug) data.slug = generateSlug(data.name);
 
-  // Handle uploaded images
-  if (req.files?.length) data.images = req.files.map((f) => `/uploads/products/${f.filename}`);
+  if (req.files?.length) data.images = filesToUrls(req.files);
 
   const product = await Product.create(data);
   success(res, product, "Product created", 201);
@@ -42,17 +41,17 @@ export const getProducts = async (req, res) => {
   const { category, collection, tag, featured, newArrival, bestseller, search, minPrice, maxPrice, sort, inStock, page = 1, limit = 20 } = req.query;
 
   const filter = { isActive: { $ne: false } };
-  if (category)    filter.category = category;
-  if (collection)  filter.collections = collection;
+  if (category)   filter.category = category;
+  if (collection) filter.collections = collection;
   if (tag) {
     const tags = tag.split(",").map(t => t.trim()).filter(Boolean);
     filter.tags = tags.length === 1 ? tags[0] : { $in: tags };
   }
-  if (featured)    filter.isFeatured = true;
-  if (newArrival)  filter.isNewArrival = true;
-  if (bestseller)  filter.isBestseller = true;
-  if (inStock)     filter.stock = { $gt: 0 };
-  if (search)      filter.$or = [{ name: { $regex: search, $options: "i" } }, { tags: { $regex: search, $options: "i" } }];
+  if (featured)   filter.isFeatured = true;
+  if (newArrival) filter.isNewArrival = true;
+  if (bestseller) filter.isBestseller = true;
+  if (inStock)    filter.stock = { $gt: 0 };
+  if (search)     filter.$or = [{ name: { $regex: search, $options: "i" } }, { tags: { $regex: search, $options: "i" } }];
   if (minPrice || maxPrice) filter.price = {};
   if (minPrice) filter.price.$gte = Number(minPrice);
   if (maxPrice) filter.price.$lte = Number(maxPrice);
@@ -85,7 +84,7 @@ export const updateProduct = async (req, res, next) => {
 
   const data = parseJsonFields({ ...req.body }, ["variants", "tags", "collections"]);
 
-  // existingImages: JSON array of image paths the admin chose to keep
+  // existingImages: JSON array of Cloudinary URLs the admin chose to keep
   let baseImages = product.images || [];
   if (typeof data.existingImages === "string") {
     try { baseImages = JSON.parse(data.existingImages); } catch { /* ignore */ }
@@ -93,7 +92,7 @@ export const updateProduct = async (req, res, next) => {
   }
 
   if (req.files?.length) {
-    const newImgs = req.files.map((f) => `/uploads/products/${f.filename}`);
+    const newImgs = filesToUrls(req.files); // full Cloudinary URLs
     data.images = [...baseImages, ...newImgs];
   } else {
     data.images = baseImages;
@@ -140,8 +139,8 @@ export const adminGetProducts = async (req, res) => {
   const filter = {};
   if (search)   filter.$or = [{ name: { $regex: search, $options: "i" } }, { sku: { $regex: search, $options: "i" } }];
   if (category) filter.category = category;
-  if (isActive !== undefined) filter.isActive = isActive === "true";
-  if (isFeatured !== undefined) filter.isFeatured = isFeatured === "true";
+  if (isActive !== undefined)     filter.isActive = isActive === "true";
+  if (isFeatured !== undefined)   filter.isFeatured = isFeatured === "true";
   if (isNewArrival !== undefined) filter.isNewArrival = isNewArrival === "true";
   if (isBestseller !== undefined) filter.isBestseller = isBestseller === "true";
   if (stock === "low") filter.stock = { $lt: 10, $gt: 0 };
