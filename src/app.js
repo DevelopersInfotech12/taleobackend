@@ -29,6 +29,7 @@ if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 // Serve uploaded images
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+app.get("/", (_req, res) => res.json({ success: true }));
 app.get("/api/health", (_req, res) => res.json({ success: true, message: "Amama API running 🚀" }));
 app.use("/api/v1", routes);
 app.use(notFound);
