@@ -1,0 +1,11 @@
+import express from "express";
+import { protect, adminOnly } from "../middleware/auth.js";
+import { uploadProduct } from "../config/multer.js";
+import { createCategory, getCategories, getCategory, updateCategory, deleteCategory } from "../controllers/categoryController.js";
+const router = express.Router();
+router.get("/",       getCategories);
+router.get("/:id",    getCategory);
+router.post("/",      protect, adminOnly, uploadProduct.single("image"), createCategory);
+router.put("/:id",    protect, adminOnly, uploadProduct.single("image"), updateCategory);
+router.delete("/:id", protect, adminOnly, deleteCategory);
+export default router;

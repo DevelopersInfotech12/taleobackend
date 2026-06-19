@@ -1,0 +1,15 @@
+import express from "express";
+import { register, login, googleLogin, logout, getMe, updateProfile, addAddress, deleteAddress, toggleWishlist, getWishlist } from "../controllers/authController.js";
+import { protect } from "../middleware/auth.js";
+const router = express.Router();
+router.post("/register", register);
+router.post("/login",    login);
+router.post("/google",   googleLogin);
+router.post("/logout",   logout);
+router.get("/me",        protect, getMe);
+router.put("/me",        protect, updateProfile);
+router.post("/me/addresses",            protect, addAddress);
+router.delete("/me/addresses/:addrId", protect, deleteAddress);
+router.post("/me/wishlist/:productId",  protect, toggleWishlist);
+router.get("/me/wishlist",             protect, getWishlist);
+export default router;

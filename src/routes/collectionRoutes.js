@@ -1,0 +1,11 @@
+import express from "express";
+import { protect, adminOnly } from "../middleware/auth.js";
+import { uploadProduct } from "../config/multer.js";
+import { createCollection, getCollections, getCollection, updateCollection, deleteCollection } from "../controllers/collectionController.js";
+const router = express.Router();
+router.get("/",       getCollections);
+router.get("/:id",    getCollection);
+router.post("/",      protect, adminOnly, uploadProduct.fields([{name:"image",maxCount:1},{name:"banner",maxCount:1}]), createCollection);
+router.put("/:id",    protect, adminOnly, uploadProduct.fields([{name:"image",maxCount:1},{name:"banner",maxCount:1}]), updateCollection);
+router.delete("/:id", protect, adminOnly, deleteCollection);
+export default router;

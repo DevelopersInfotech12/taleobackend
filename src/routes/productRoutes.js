@@ -1,0 +1,14 @@
+import express from "express";
+import { protect, adminOnly } from "../middleware/auth.js";
+import { uploadProduct } from "../config/multer.js";
+import { createProduct, getProducts, getProduct, updateProduct, deleteProduct, addReview, deleteReview, adminGetProducts } from "../controllers/productController.js";
+const router = express.Router();
+router.get("/",         getProducts);
+router.get("/admin",    protect, adminOnly, adminGetProducts);
+router.get("/:id",      getProduct);
+router.post("/",        protect, adminOnly, uploadProduct.array("images", 8), createProduct);
+router.put("/:id",      protect, adminOnly, uploadProduct.array("images", 8), updateProduct);
+router.delete("/:id",   protect, adminOnly, deleteProduct);
+router.post("/:id/reviews",             protect, addReview);
+router.delete("/:id/reviews/:reviewId", protect, deleteReview);
+export default router;

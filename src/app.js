@@ -1,0 +1,37 @@
+import "express-async-errors";
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
+
+import routes from "./routes/index.js";
+import errorHandler from "./middleware/errorHandler.js";
+import notFound from "./middleware/notFound.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(cors({
+  origin: [process.env.CLIENT_URL || "http://localhost:3000"],
+  credentials: true,
+  methods: ["GET","POST","PUT","DELETE","PATCH","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
+}));
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
+
+// Serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
+app.get("/api/health", (_req, res) => res.json({ success: true, message: "Amama API running 🚀" }));
+app.use("/api/v1", routes);
+app.use(notFound);
+app.use(errorHandler);
+
+export default app;

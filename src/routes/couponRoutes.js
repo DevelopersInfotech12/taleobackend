@@ -1,0 +1,11 @@
+import express from "express";
+import { protect, adminOnly } from "../middleware/auth.js";
+import { createCoupon, getCoupons, updateCoupon, deleteCoupon, validateCoupon } from "../controllers/couponController.js";
+const router = express.Router();
+router.post("/validate", protect, validateCoupon);
+router.use(protect, adminOnly);
+router.get("/",       getCoupons);
+router.post("/",      createCoupon);
+router.put("/:id",    updateCoupon);
+router.delete("/:id", deleteCoupon);
+export default router;
