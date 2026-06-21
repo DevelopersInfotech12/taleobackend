@@ -78,10 +78,8 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
 });
 
 export const deleteProduct = asyncHandler(async (req, res, next) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) return next(new AppError("Product not found", 404));
-  product.isActive = false;
-  await product.save();
   success(res, null, "Product deleted");
 });
 

@@ -56,3 +56,19 @@ export const getDashboard = async (_req, res) => {
     monthlySales: monthlySalesFormatted,
   }, "Dashboard fetched");
 };
+
+// Orders placed but not yet shipped — used for dashboard + notification bell
+const UNSHIPPED_STATUSES = ["placed", "confirmed", "processing"];
+
+export const getPendingShipments = async (req, res) => {
+  const { limit = 10 } = req.query;
+  const [orders, count] = await Promise.all([
+    Order.find({ status: { $in: UNSHIPPED_STATUSES } })
+      .populate("user", "name email")
+      .sort("-createdAt")
+      .limit(Number(limit))
+      .select("orderNumber total status createdAt user"),
+    Order.countDocuments({ status: { $in: UNSHIPPED_STATUSES } }),
+  ]);
+  success(res, { orders, count }, "Pending shipments fetched");
+};
