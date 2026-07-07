@@ -120,11 +120,13 @@ export const getInstagramPosts = async (req, res) => {
     }
 
     // Filter out VIDEO-only posts without a thumbnail, keep IMAGE + CAROUSEL_ALBUM
+    // Keep the real video file url intact as video_url; use thumbnail only as the poster/cover image.
     const posts = (data.data || []).filter(
       (p) => p.media_type !== "VIDEO" || p.thumbnail_url
     ).map((p) => ({
       ...p,
-      media_url: p.media_type === "VIDEO" ? p.thumbnail_url : p.media_url,
+      cover_url: p.media_type === "VIDEO" ? p.thumbnail_url : p.media_url,
+      video_url: p.media_type === "VIDEO" ? p.media_url : undefined,
     }));
 
     return success(res, { posts, source: "instagram" }, "Instagram posts");
