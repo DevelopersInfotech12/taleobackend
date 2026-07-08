@@ -14,6 +14,7 @@ import paymentRoutes    from "./paymentRoutes.js";
 import uploadRoutes     from "./uploadRoutes.js";
 import wishlistRoutes from "./wishlistRoutes.js"
 import taskRoutes from "./taskRoutes.js";
+import announcementRoutes from "./announcementRoutes.js";
 
 const router = express.Router();
 router.use("/auth",        authRoutes);
@@ -31,6 +32,7 @@ router.use("/payments",    paymentRoutes);
 router.use("/upload",      uploadRoutes);
 router.use("/wishlist", wishlistRoutes);            
 router.use("/tasks",       taskRoutes);
+router.use("/announcements", announcementRoutes);
 
 
 export default router;
