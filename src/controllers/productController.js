@@ -23,7 +23,7 @@ const filesToUrls = async (files, folder) => {
 };
 
 export const createProduct = asyncHandler(async (req, res) => {
-  const data = parseJsonFields({ ...req.body }, ["variants", "tags", "collections"]);
+  const data = parseJsonFields({ ...req.body }, ["variants", "tags", "collections", "specifications"]);
   if (!data.slug) data.slug = generateSlug(data.name);
   if (req.files?.length) data.images = await filesToUrls(req.files, "taleo/products");
   const product = await Product.create(data);
@@ -65,7 +65,7 @@ export const getProduct = asyncHandler(async (req, res, next) => {
 export const updateProduct = asyncHandler(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
   if (!product) return next(new AppError("Product not found", 404));
-  const data = parseJsonFields({ ...req.body }, ["variants", "tags", "collections"]);
+  const data = parseJsonFields({ ...req.body }, ["variants", "tags", "collections", "specifications"]);
   let baseImages = product.images || [];
   if (typeof data.existingImages === "string") {
     try { baseImages = JSON.parse(data.existingImages); } catch {}
