@@ -6,11 +6,6 @@ const variantSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 },
 }, { _id: true });
 
-const specificationSchema = new mongoose.Schema({
-  label: { type: String, trim: true },   // e.g. "Material", "Gross Weight"
-  value: { type: String, trim: true },   // e.g. "brass", "12.4 g"
-}, { _id: true });
-
 const reviewSchema = new mongoose.Schema({
   user:    { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   name:    { type: String },
@@ -30,9 +25,6 @@ const productSchema = new mongoose.Schema({
   collections:  [{ type: mongoose.Schema.Types.ObjectId, ref: "Collection" }],
   tags:         [{ type: String }],
   material:     { type: String },
-  weight:       { type: String, trim: true },             // e.g. "12.4 g"
-  dimensions:   { type: String, trim: true },             // e.g. "24mm x 18mm"
-  specifications: [specificationSchema],                  // admin-defined spec rows
   variants:     [variantSchema],
   stock:        { type: Number, default: 0, min: 0 },
   sku:          { type: String, trim: true },
