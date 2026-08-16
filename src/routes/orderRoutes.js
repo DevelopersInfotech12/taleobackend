@@ -1,13 +1,17 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/auth.js";
-import { createOrder, getMyOrders, getMyOrder, cancelOrder, adminGetOrders, adminGetOrder, adminUpdateOrder } from "../controllers/orderController.js";
+import { createOrder, getMyOrders, getMyOrder, downloadMyInvoice, cancelOrder, adminGetOrders, adminGetOrder, adminUpdateOrder, adminGetRefunds, adminProcessRefund, adminDownloadInvoice } from "../controllers/orderController.js";
 const router = express.Router();
 router.use(protect);
 router.post("/",                createOrder);
 router.get("/my",               getMyOrders);
 router.get("/my/:id",           getMyOrder);
+router.get("/my/:id/invoice",   downloadMyInvoice);
 router.patch("/my/:id/cancel",  cancelOrder);
+router.get("/refunds/list", adminOnly, adminGetRefunds);
 router.get("/",        adminOnly, adminGetOrders);
 router.get("/:id",     adminOnly, adminGetOrder);
+router.get("/:id/invoice", adminOnly, adminDownloadInvoice);
 router.put("/:id",     adminOnly, adminUpdateOrder);
+router.post("/:id/refund", adminOnly, adminProcessRefund);
 export default router;

@@ -36,6 +36,11 @@ const orderSchema = new mongoose.Schema({
   notes:           { type: String },
   trackingNumber:  { type: String },
 
+  // Refund tracking
+  refundAmount:    { type: Number },
+  refundReason:    { type: String },
+  refundedAt:      { type: Date },
+
   // Razorpay
   razorpayOrderId:   { type: String },
   razorpayPaymentId: { type: String },

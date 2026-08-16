@@ -9,13 +9,16 @@ export const getDashboard = async (_req, res) => {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
+  const REFUND_FILTER = { $or: [{ paymentStatus: "refunded" }, { status: "returned" }] };
+
   const [
     totalOrders, monthOrders, lastMonthOrders,
     totalRevenue, monthRevenue,
     totalCustomers, newCustomers,
-    lowStockProducts, totalProducts,
+    lowStockProducts, outOfStockProducts, totalProducts,
     totalBlogs, recentOrders, topProducts,
     monthlySales,
+    refundsCount, refundedAmountAgg,
   ] = await Promise.all([
     Order.countDocuments(),
     Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
@@ -24,7 +27,8 @@ export const getDashboard = async (_req, res) => {
     Order.aggregate([{ $match: { status: { $nin: ["cancelled", "returned"] }, createdAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: "$total" } } }]),
     User.countDocuments({ role: "customer" }),
     User.countDocuments({ role: "customer", createdAt: { $gte: startOfMonth } }),
-    Product.countDocuments({ stock: { $lt: 10 }, isActive: true }),
+    Product.countDocuments({ stock: { $lt: 10, $gt: 0 }, isActive: true }),
+    Product.countDocuments({ stock: 0, isActive: true }),
     Product.countDocuments({ isActive: true }),
     Blog.countDocuments({ isPublished: true }),
     Order.find().populate("user", "name email").sort("-createdAt").limit(8).select("orderNumber total status createdAt user"),
@@ -34,6 +38,8 @@ export const getDashboard = async (_req, res) => {
       { $group: { _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } }, revenue: { $sum: "$total" }, orders: { $sum: 1 } } },
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]),
+    Order.countDocuments(REFUND_FILTER),
+    Order.aggregate([{ $match: REFUND_FILTER }, { $group: { _id: null, amount: { $sum: { $ifNull: ["$refundAmount", "$total"] } } } }]),
   ]);
 
   const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -49,7 +55,8 @@ export const getDashboard = async (_req, res) => {
       monthRevenue: monthRevenue[0]?.total || 0,
       totalOrders, monthOrders, lastMonthOrders,
       totalCustomers, newCustomers,
-      lowStockProducts, totalProducts, totalBlogs,
+      lowStockProducts, outOfStockProducts, totalProducts, totalBlogs,
+      refundsCount, refundedAmount: refundedAmountAgg[0]?.amount || 0,
     },
     recentOrders,
     topProducts,

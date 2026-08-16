@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #b08850;
+  --gold-lt: #c9a96e;
+  --brown: #3d1f10;
+  --brown-dk: #1a0e07;
+  --cream: #f5efe8;
+  --cream-dk: #ede4d8;
+  --text: #2a1a0e;
+  --text-muted: #7a6548;
+  --border-color: #e5dbc9;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  /* font-family: var(--font-jost), 'system-ui', sans-serif; */
+  background: var(--cream);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+
+
+/* Fade-up animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeUp {
+  animation: fadeUp 0.8s ease both;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease both;
+}
+
+.animate-slideLeft {
+  animation: slideInLeft 0.8s ease both;
+}
+
+.animate-slideRight {
+  animation: slideInRight 0.8s ease both;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.7s ease both;
+}
+
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Stagger delays */
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+.delay-600 {
+  animation-delay: 0.6s;
+}
+
+.delay-700 {
+  animation-delay: 0.7s;
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #b08850 0%, #d4a96a 50%, #b08850 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(176, 136, 80, 0.18);
+}
+
+/* Font utility classes — map old var names to new fonts */
+.font-display {
+  font-family: var(--font-playfair), 'Georgia', serif;
+}
+
+.font-body {
+  font-family: var(--font-jost), system-ui, sans-serif;
+}
+
+.animate-marquee {
+  animation: marquee 10s linear infinite;
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-[1240px] px-6 md:px-10;
+}

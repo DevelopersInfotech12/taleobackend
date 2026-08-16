@@ -104,7 +104,7 @@ export const deleteReview = asyncHandler(async (req, res, next) => {
 });
 
 export const adminGetProducts = asyncHandler(async (req, res) => {
-  const { search, category, isActive, isFeatured, isNewArrival, isBestseller, stock, sort, page = 1, limit = 20 } = req.query;
+  const { search, category, isActive, isFeatured, isNewArrival, isBestseller, stock, sold, sort, page = 1, limit = 20 } = req.query;
   const filter = {};
   if (search)   filter.$or = [{ name: { $regex: search, $options: "i" } }, { sku: { $regex: search, $options: "i" } }];
   if (category) filter.category = category;
@@ -114,6 +114,7 @@ export const adminGetProducts = asyncHandler(async (req, res) => {
   if (isBestseller !== undefined) filter.isBestseller = isBestseller === "true";
   if (stock === "low") filter.stock = { $lt: 10, $gt: 0 };
   if (stock === "out") filter.stock = 0;
+  if (sold === "true") filter.soldCount = { $gt: 0 };
   const sortMap = { newest: "-createdAt", oldest: "createdAt", "price-asc": "price", "price-desc": "-price", "name-asc": "name", "stock-asc": "stock", "stock-desc": "-stock", popular: "-soldCount" };
   const sortStr = sortMap[sort] || "-createdAt";
   const skip = (Number(page) - 1) * Number(limit);
