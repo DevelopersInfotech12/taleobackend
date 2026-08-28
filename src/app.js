@@ -17,9 +17,10 @@ const app = express();
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({
   origin: [
-    process.env.CLIENT_URL || "http://localhost:3000",
-    "https://taleofrontend.vercel.app",
-  ],
+    "http://localhost:3000",
+    process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
+  ].filter(Boolean),
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
