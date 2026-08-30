@@ -16,6 +16,10 @@ import wishlistRoutes from "./wishlistRoutes.js"
 import taskRoutes from "./taskRoutes.js";
 import announcementRoutes from "./announcementRoutes.js";
 import heroRoutes from "./heroRoutes.js";
+import heritageRoutes from "./heritageRoutes.js";
+import productHeroRoutes from "./productHeroRoutes.js";
+import promoBannerRoutes from "./promoBannerRoutes.js";
+import faqRoutes from "./faqRoutes.js";
 
 const router = express.Router();
 router.use("/auth",        authRoutes);
@@ -35,6 +39,10 @@ router.use("/wishlist", wishlistRoutes);
 router.use("/tasks",       taskRoutes);
 router.use("/announcements", announcementRoutes);
 router.use("/hero",        heroRoutes);
+router.use("/heritage",    heritageRoutes);
+router.use("/product-hero", productHeroRoutes);
+router.use("/promo-banners", promoBannerRoutes);
+router.use("/faq",         faqRoutes);
 
 
 export default router;

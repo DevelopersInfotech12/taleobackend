@@ -3,21 +3,21 @@ import { useEffect } from "react";
 
 // ── Status Badge ───────────────────────────────────────────
 const STATUS_MAP = {
-  pending:    "bg-yellow-50 text-yellow-700 border-yellow-200",
-  placed:     "bg-yellow-50 text-yellow-700 border-yellow-200",
-  confirmed:  "bg-sky-50 text-sky-700 border-sky-200",
+  pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  placed: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  confirmed: "bg-sky-50 text-sky-700 border-sky-200",
   processing: "bg-blue-50 text-blue-700 border-blue-200",
-  shipped:    "bg-indigo-50 text-indigo-700 border-indigo-200",
-  delivered:  "bg-green-50 text-green-700 border-green-200",
-  cancelled:  "bg-red-50 text-red-700 border-red-200",
-  returned:   "bg-gray-50 text-gray-600 border-gray-200",
-  paid:       "bg-green-50 text-green-700 border-green-200",
-  failed:     "bg-red-50 text-red-700 border-red-200",
-  refunded:   "bg-gray-50 text-gray-600 border-gray-200",
-  active:     "bg-green-50 text-green-700 border-green-200",
-  inactive:   "bg-gray-50 text-gray-600 border-gray-200",
-  admin:      "bg-purple-50 text-purple-700 border-purple-200",
-  customer:   "bg-gray-50 text-gray-600 border-gray-200",
+  shipped: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  delivered: "bg-green-50 text-green-700 border-green-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
+  returned: "bg-gray-50 text-gray-600 border-gray-200",
+  paid: "bg-green-50 text-green-700 border-green-200",
+  failed: "bg-red-50 text-red-700 border-red-200",
+  refunded: "bg-gray-50 text-gray-600 border-gray-200",
+  active: "bg-green-50 text-green-700 border-green-200",
+  inactive: "bg-gray-50 text-gray-600 border-gray-200",
+  admin: "bg-purple-50 text-purple-700 border-purple-200",
+  customer: "bg-gray-50 text-gray-600 border-gray-200",
 };
 
 export function Badge({ status, label }) {
@@ -282,7 +282,7 @@ export function Thead({ headers }) {
     <thead>
       <tr className="bg-[#fdfaf6] border-b border-[#ede4d8]">
         {headers.map(h => (
-          <th key={h} className="text-left px-4 py-[11px] text-[11px] tracking-[0.18em] uppercase text-[#b8a898] font-bold">
+          <th key={h} className="text-left px-4 py-[11px] text-[10px] tracking-[0.18em] uppercase text-[#b8a898] font-bold">
             {h}
           </th>
         ))}
