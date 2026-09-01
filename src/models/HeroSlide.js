@@ -33,6 +33,18 @@ const heroSlideSchema = new mongoose.Schema(
     ctaLabel: { type: String, trim: true, default: "" },
     ctaHref: { type: String, trim: true, default: "/" },
 
+    // ── Mobile overrides ──
+    // Each falls back to its desktop counterpart above when left blank.
+    // Lets admins run shorter copy on small screens without a second slide.
+    mobileCategory: { type: String, trim: true, default: "" },
+    mobileChapter: { type: String, trim: true, default: "" },
+    mobileTitle: { type: String, trim: true, default: "" },
+    mobileTagline: { type: String, trim: true, default: "" },
+    mobileBody: { type: String, trim: true, default: "" },
+    mobileFootnote: { type: String, trim: true, default: "" },
+    mobileCtaLabel: { type: String, trim: true, default: "" },
+    mobileCtaHref: { type: String, trim: true, default: "" },
+
     // Intro slide = bigger title, no eyebrow, outlined CTA, left rule
     isIntro: { type: Boolean, default: false },
 
