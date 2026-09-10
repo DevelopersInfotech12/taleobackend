@@ -8,6 +8,73 @@ const GEMSTONES    = ["Diamond","Ruby","Emerald","Sapphire","Pearl","Amethyst","
 const METALS       = ["Yellow Gold","White Gold","Rose Gold","Platinum","Silver 925","Two-Tone"];
 const STONE_COLORS = ["White","Yellow","Pink","Blue","Green","Red","Purple","Black"];
 
+const ADD_NEW = "__add_new__";
+
+// A <select> that also offers a "+ Add new…" option. Picking it opens a small
+// inline add-box directly under the field (instead of an ugly browser prompt).
+// `options` is [{ value, label }]. `onAddNew(text)` should persist the value
+// and return the value/id that should end up selected.
+function CreatableSelect({ value, options, onChange, onAddNew, placeholder = "— None —", inputLabel = "New value" }) {
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const v = e.target.value;
+    if (v === ADD_NEW) { setAdding(true); setText(""); return; }
+    onChange(v);
+  };
+
+  const cancel = () => { setAdding(false); setText(""); };
+
+  const save = async () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setSubmitting(true);
+    try {
+      await onAddNew(trimmed);
+      setAdding(false);
+      setText("");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div>
+      <select className={selectCls} value={adding ? ADD_NEW : value} onChange={handleChange}>
+        <option value="">{placeholder}</option>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <option value={ADD_NEW}>+ Add new…</option>
+      </select>
+
+      {adding && (
+        <div className="mt-2 p-2.5 rounded-lg border border-[#c9a84c]/50 bg-[#fdfaf6] flex items-center gap-2">
+          <input
+            autoFocus
+            className={inputCls + " bg-white"}
+            placeholder={inputLabel}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") { e.preventDefault(); save(); }
+              if (e.key === "Escape") { e.preventDefault(); cancel(); }
+            }}
+          />
+          <button type="button" onClick={save} disabled={submitting || !text.trim()}
+            className="shrink-0 text-[11px] px-3 py-2 rounded-lg bg-[#1a1008] text-[#e8d5b0] font-medium disabled:opacity-50">
+            {submitting ? "Adding…" : "Add"}
+          </button>
+          <button type="button" onClick={cancel} disabled={submitting}
+            className="shrink-0 text-[11px] px-2 py-2 text-[#9c8a78] hover:text-[#1a1008]">
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const emptyForm = {
   name: "", slug: "", shortDesc: "", description: "",
   price: "", comparePrice: "", stock: "", sku: "", material: "",
@@ -17,13 +84,62 @@ const emptyForm = {
   variants: [],
 };
 
-export default function ProductFormModal({ open, onClose, product, categories, collections, onSaved, showToast }) {
+export default function ProductFormModal({ open, onClose, product, categories, collections, onSaved, showToast, onCategoryAdded }) {
   const { token } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [existingImages, setExistingImages] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Dropdown option lists — start with the built-ins, then merge in whatever
+  // admins have already added via the API so new products can reuse them.
+  const toOpts = (arr) => arr.map(v => ({ value: v, label: v }));
+  const [gemstoneOptions, setGemstoneOptions] = useState(toOpts(GEMSTONES));
+  const [metalOptions, setMetalOptions] = useState(toOpts(METALS));
+  const [stoneColorOptions, setStoneColorOptions] = useState(toOpts(STONE_COLORS));
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const res = await apiFetch("/attributes", token);
+        const data = res.data || {};
+        if (data.gemstone) setGemstoneOptions(toOpts(data.gemstone));
+        if (data.metal) setMetalOptions(toOpts(data.metal));
+        if (data.stoneColor) setStoneColorOptions(toOpts(data.stoneColor));
+      } catch { /* fall back to built-in lists */ }
+    })();
+  }, [open, token]);
+
+  const addAttribute = async (type, value, field, setOptions) => {
+    try {
+      const res = await apiFetch("/attributes", token, {
+        method: "POST",
+        body: JSON.stringify({ type, value }),
+      });
+      setOptions(res.data.values.map(v => ({ value: v, label: v })));
+      update(field, res.data.value);
+      showToast(`"${res.data.value}" added`);
+    } catch (err) {
+      showToast(err.message, "error");
+      throw err;
+    }
+  };
+
+  const addCategory = async (name) => {
+    try {
+      const fd = new FormData();
+      fd.append("name", name);
+      const res = await apiFetch("/categories", token, { method: "POST", body: fd });
+      onCategoryAdded?.(res.data);
+      update("category", res.data._id);
+      showToast(`Category "${res.data.name}" added`);
+    } catch (err) {
+      showToast(err.message, "error");
+      throw err;
+    }
+  };
 
   useEffect(() => {
     if (product) {
@@ -156,28 +272,41 @@ export default function ProductFormModal({ open, onClose, product, categories, c
             <input className={inputCls} value={form.material} onChange={e => update("material", e.target.value)} placeholder="e.g. 18k Gold" />
           </Field>
           <Field label="Gemstone">
-            <select className={selectCls} value={form.gemstone} onChange={e => update("gemstone", e.target.value)}>
-              <option value="">— None —</option>
-              {GEMSTONES.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
+            <CreatableSelect
+              value={form.gemstone}
+              options={gemstoneOptions}
+              onChange={v => update("gemstone", v)}
+              onAddNew={v => addAttribute("gemstone", v, "gemstone", setGemstoneOptions)}
+              inputLabel="New gemstone name"
+            />
           </Field>
           <Field label="Metal Type">
-            <select className={selectCls} value={form.metal} onChange={e => update("metal", e.target.value)}>
-              <option value="">— None —</option>
-              {METALS.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <CreatableSelect
+              value={form.metal}
+              options={metalOptions}
+              onChange={v => update("metal", v)}
+              onAddNew={v => addAttribute("metal", v, "metal", setMetalOptions)}
+              inputLabel="New metal type"
+            />
           </Field>
           <Field label="Stone Color">
-            <select className={selectCls} value={form.stoneColor} onChange={e => update("stoneColor", e.target.value)}>
-              <option value="">— None —</option>
-              {STONE_COLORS.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <CreatableSelect
+              value={form.stoneColor}
+              options={stoneColorOptions}
+              onChange={v => update("stoneColor", v)}
+              onAddNew={v => addAttribute("stoneColor", v, "stoneColor", setStoneColorOptions)}
+              inputLabel="New stone color"
+            />
           </Field>
           <Field label="Category">
-            <select className={selectCls} value={form.category} onChange={e => update("category", e.target.value)}>
-              <option value="">— Select —</option>
-              {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
+            <CreatableSelect
+              value={form.category}
+              options={categories.map(c => ({ value: c._id, label: c.name }))}
+              onChange={v => update("category", v)}
+              onAddNew={addCategory}
+              placeholder="— Select —"
+              inputLabel="New category name"
+            />
           </Field>
           <Field label="Tags (comma separated)" span>
             <input className={inputCls} value={form.tags} onChange={e => update("tags", e.target.value)} placeholder="gold, rings, bestseller" />

@@ -20,6 +20,7 @@ import heritageRoutes from "./heritageRoutes.js";
 import productHeroRoutes from "./productHeroRoutes.js";
 import promoBannerRoutes from "./promoBannerRoutes.js";
 import faqRoutes from "./faqRoutes.js";
+import attributeRoutes from "./attributeRoutes.js";
 
 const router = express.Router();
 router.use("/auth",        authRoutes);
@@ -43,6 +44,7 @@ router.use("/heritage",    heritageRoutes);
 router.use("/product-hero", productHeroRoutes);
 router.use("/promo-banners", promoBannerRoutes);
 router.use("/faq",         faqRoutes);
+router.use("/attributes",  attributeRoutes);
 
 
 export default router;

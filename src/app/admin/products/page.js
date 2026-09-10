@@ -229,6 +229,7 @@ export default function ProductsPage() {
         collections={collections}
         onSaved={fetchProducts}
         showToast={showToast}
+        onCategoryAdded={(cat) => setCategories(cs => [...cs, cat])}
       />
 
       <ConfirmDialog
