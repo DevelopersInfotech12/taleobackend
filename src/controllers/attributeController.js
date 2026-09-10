@@ -3,11 +3,12 @@ import AppError from "../utils/AppError.js";
 import { success } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-// Built-in starter options — always shown even before any admin adds a custom one.
+// No built-in starter options — dropdowns are fully dynamic: they only show
+// values an admin has added via "+ Add new…" in the product form.
 export const DEFAULT_ATTRIBUTES = {
-  gemstone:   ["Diamond", "Ruby", "Emerald", "Sapphire", "Pearl", "Amethyst", "Moissanite", "No Stone"],
-  metal:      ["Yellow Gold", "White Gold", "Rose Gold", "Platinum", "Silver 925", "Two-Tone"],
-  stoneColor: ["White", "Yellow", "Pink", "Blue", "Green", "Red", "Purple", "Black"],
+  gemstone:   [],
+  metal:      [],
+  stoneColor: [],
 };
 
 const ATTRIBUTE_TYPES = Object.keys(DEFAULT_ATTRIBUTES);

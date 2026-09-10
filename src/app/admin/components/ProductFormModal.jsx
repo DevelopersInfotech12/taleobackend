@@ -1,31 +1,36 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { apiFetch, imgUrl } from "../lib/api";
 import { useAuth } from "../lib/AdminAuthContext";
 import { Modal, Field, inputCls, selectCls, PrimaryButton, SecondaryButton } from "./ui";
 
-const GEMSTONES    = ["Diamond","Ruby","Emerald","Sapphire","Pearl","Amethyst","Moissanite","No Stone"];
-const METALS       = ["Yellow Gold","White Gold","Rose Gold","Platinum","Silver 925","Two-Tone"];
-const STONE_COLORS = ["White","Yellow","Pink","Blue","Green","Red","Purple","Black"];
+const GEMSTONES    = [];
+const METALS       = [];
+const STONE_COLORS = [];
 
 const ADD_NEW = "__add_new__";
 
-// A <select> that also offers a "+ Add new…" option. Picking it opens a small
-// inline add-box directly under the field (instead of an ugly browser prompt).
-// `options` is [{ value, label }]. `onAddNew(text)` should persist the value
-// and return the value/id that should end up selected.
-function CreatableSelect({ value, options, onChange, onAddNew, placeholder = "— None —", inputLabel = "New value" }) {
+// Custom dropdown (not a native <select>) so each option can carry its own
+// delete "✕" button. Options: [{ value, label, deletable }].
+function CreatableSelect({ value, options, onChange, onAddNew, onDelete, placeholder = "— None —", inputLabel = "New value" }) {
+  const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const boxRef = useRef(null);
 
-  const handleChange = (e) => {
-    const v = e.target.value;
-    if (v === ADD_NEW) { setAdding(true); setText(""); return; }
-    onChange(v);
-  };
+  useEffect(() => {
+    const onDocClick = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) { setOpen(false); } };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
-  const cancel = () => { setAdding(false); setText(""); };
+  const selectedLabel = options.find(o => o.value === value)?.label || placeholder;
+
+  const pick = (v) => { onChange(v); setOpen(false); };
+
+  const startAdd = () => { setAdding(true); setText(""); setOpen(false); };
+  const cancelAdd = () => { setAdding(false); setText(""); };
 
   const save = async () => {
     const trimmed = text.trim();
@@ -40,13 +45,46 @@ function CreatableSelect({ value, options, onChange, onAddNew, placeholder = "�
     }
   };
 
+  const remove = async (e, o) => {
+    e.stopPropagation();
+    if (!window.confirm(`Delete "${o.label}"?`)) return;
+    await onDelete(o.value);
+    if (value === o.value) onChange("");
+  };
+
   return (
-    <div>
-      <select className={selectCls} value={adding ? ADD_NEW : value} onChange={handleChange}>
-        <option value="">{placeholder}</option>
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        <option value={ADD_NEW}>+ Add new…</option>
-      </select>
+    <div className="relative" ref={boxRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={selectCls + " font-semibold text-left flex items-center justify-between gap-2"}
+      >
+        <span className={value ? "" : "text-[#9c8a78] font-normal"}>{selectedLabel}</span>
+        <span className="text-[#9c8a78] text-[10px]">▾</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-full bg-white border border-[#e0d4c4] rounded-lg shadow-lg max-h-56 overflow-y-auto">
+          <div onClick={() => pick("")} className="px-3 py-2 text-[13px] font-semibold text-[#9c8a78] hover:bg-[#fdfaf6] cursor-pointer">
+            {placeholder}
+          </div>
+          {options.map(o => (
+            <div key={o.value} onClick={() => pick(o.value)}
+              className="px-3 py-2 flex items-center justify-between gap-2 text-[13px] font-semibold text-[#1a1008] hover:bg-[#fdfaf6] cursor-pointer">
+              <span>{o.label}</span>
+              {o.deletable && (
+                <button type="button" onClick={e => remove(e, o)}
+                  className="shrink-0 text-red-400 hover:text-red-600 text-[12px] px-1.5" title="Delete">
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+          <div onClick={startAdd} className="px-3 py-2 text-[13px] font-semibold text-[#c9a84c] hover:bg-[#fdfaf6] cursor-pointer border-t border-[#f0e8dc]">
+            + Add new…
+          </div>
+        </div>
+      )}
 
       {adding && (
         <div className="mt-2 p-2.5 rounded-lg border border-[#c9a84c]/50 bg-[#fdfaf6] flex items-center gap-2">
@@ -58,14 +96,14 @@ function CreatableSelect({ value, options, onChange, onAddNew, placeholder = "�
             onChange={e => setText(e.target.value)}
             onKeyDown={e => {
               if (e.key === "Enter") { e.preventDefault(); save(); }
-              if (e.key === "Escape") { e.preventDefault(); cancel(); }
+              if (e.key === "Escape") { e.preventDefault(); cancelAdd(); }
             }}
           />
           <button type="button" onClick={save} disabled={submitting || !text.trim()}
             className="shrink-0 text-[11px] px-3 py-2 rounded-lg bg-[#1a1008] text-[#e8d5b0] font-medium disabled:opacity-50">
             {submitting ? "Adding…" : "Add"}
           </button>
-          <button type="button" onClick={cancel} disabled={submitting}
+          <button type="button" onClick={cancelAdd} disabled={submitting}
             className="shrink-0 text-[11px] px-2 py-2 text-[#9c8a78] hover:text-[#1a1008]">
             Cancel
           </button>
@@ -84,7 +122,7 @@ const emptyForm = {
   variants: [],
 };
 
-export default function ProductFormModal({ open, onClose, product, categories, collections, onSaved, showToast, onCategoryAdded }) {
+export default function ProductFormModal({ open, onClose, product, categories, collections, onSaved, showToast, onCategoryAdded, onCategoryRemoved }) {
   const { token } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [existingImages, setExistingImages] = useState([]);
@@ -94,10 +132,12 @@ export default function ProductFormModal({ open, onClose, product, categories, c
 
   // Dropdown option lists — start with the built-ins, then merge in whatever
   // admins have already added via the API so new products can reuse them.
-  const toOpts = (arr) => arr.map(v => ({ value: v, label: v }));
-  const [gemstoneOptions, setGemstoneOptions] = useState(toOpts(GEMSTONES));
-  const [metalOptions, setMetalOptions] = useState(toOpts(METALS));
-  const [stoneColorOptions, setStoneColorOptions] = useState(toOpts(STONE_COLORS));
+  // Built-in defaults aren't deletable (they live in backend code, not the DB);
+  // only admin-added custom values get a delete "✕".
+  const toOpts = (arr, defaults) => arr.map(v => ({ value: v, label: v, deletable: !defaults.includes(v) }));
+  const [gemstoneOptions, setGemstoneOptions] = useState(toOpts(GEMSTONES, GEMSTONES));
+  const [metalOptions, setMetalOptions] = useState(toOpts(METALS, METALS));
+  const [stoneColorOptions, setStoneColorOptions] = useState(toOpts(STONE_COLORS, STONE_COLORS));
 
   useEffect(() => {
     if (!open) return;
@@ -105,20 +145,41 @@ export default function ProductFormModal({ open, onClose, product, categories, c
       try {
         const res = await apiFetch("/attributes", token);
         const data = res.data || {};
-        if (data.gemstone) setGemstoneOptions(toOpts(data.gemstone));
-        if (data.metal) setMetalOptions(toOpts(data.metal));
-        if (data.stoneColor) setStoneColorOptions(toOpts(data.stoneColor));
+        if (data.gemstone) setGemstoneOptions(toOpts(data.gemstone, GEMSTONES));
+        if (data.metal) setMetalOptions(toOpts(data.metal, METALS));
+        if (data.stoneColor) setStoneColorOptions(toOpts(data.stoneColor, STONE_COLORS));
       } catch { /* fall back to built-in lists */ }
     })();
   }, [open, token]);
 
-  const addAttribute = async (type, value, field, setOptions) => {
+  const deleteAttribute = async (type, value, field, setOptions, defaults) => {
+    try {
+      const res = await apiFetch(`/attributes/${type}/${encodeURIComponent(value)}`, token, { method: "DELETE" });
+      setOptions(toOpts(res.data.values, defaults));
+      if (form[field] === value) update(field, "");
+      showToast(`"${value}" removed`);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  };
+
+  const deleteCategoryOption = async (id) => {
+    try {
+      await apiFetch(`/categories/${id}`, token, { method: "DELETE" });
+      onCategoryRemoved?.(id);
+      showToast("Category removed");
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  };
+
+  const addAttribute = async (type, value, field, setOptions, defaults) => {
     try {
       const res = await apiFetch("/attributes", token, {
         method: "POST",
         body: JSON.stringify({ type, value }),
       });
-      setOptions(res.data.values.map(v => ({ value: v, label: v })));
+      setOptions(toOpts(res.data.values, defaults));
       update(field, res.data.value);
       showToast(`"${res.data.value}" added`);
     } catch (err) {
@@ -276,7 +337,8 @@ export default function ProductFormModal({ open, onClose, product, categories, c
               value={form.gemstone}
               options={gemstoneOptions}
               onChange={v => update("gemstone", v)}
-              onAddNew={v => addAttribute("gemstone", v, "gemstone", setGemstoneOptions)}
+              onAddNew={v => addAttribute("gemstone", v, "gemstone", setGemstoneOptions, GEMSTONES)}
+              onDelete={v => deleteAttribute("gemstone", v, "gemstone", setGemstoneOptions, GEMSTONES)}
               inputLabel="New gemstone name"
             />
           </Field>
@@ -285,7 +347,8 @@ export default function ProductFormModal({ open, onClose, product, categories, c
               value={form.metal}
               options={metalOptions}
               onChange={v => update("metal", v)}
-              onAddNew={v => addAttribute("metal", v, "metal", setMetalOptions)}
+              onAddNew={v => addAttribute("metal", v, "metal", setMetalOptions, METALS)}
+              onDelete={v => deleteAttribute("metal", v, "metal", setMetalOptions, METALS)}
               inputLabel="New metal type"
             />
           </Field>
@@ -294,16 +357,18 @@ export default function ProductFormModal({ open, onClose, product, categories, c
               value={form.stoneColor}
               options={stoneColorOptions}
               onChange={v => update("stoneColor", v)}
-              onAddNew={v => addAttribute("stoneColor", v, "stoneColor", setStoneColorOptions)}
+              onAddNew={v => addAttribute("stoneColor", v, "stoneColor", setStoneColorOptions, STONE_COLORS)}
+              onDelete={v => deleteAttribute("stoneColor", v, "stoneColor", setStoneColorOptions, STONE_COLORS)}
               inputLabel="New stone color"
             />
           </Field>
           <Field label="Category">
             <CreatableSelect
               value={form.category}
-              options={categories.map(c => ({ value: c._id, label: c.name }))}
+              options={categories.map(c => ({ value: c._id, label: c.name, deletable: true }))}
               onChange={v => update("category", v)}
               onAddNew={addCategory}
+              onDelete={deleteCategoryOption}
               placeholder="— Select —"
               inputLabel="New category name"
             />

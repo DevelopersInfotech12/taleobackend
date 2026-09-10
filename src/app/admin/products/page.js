@@ -230,6 +230,7 @@ export default function ProductsPage() {
         onSaved={fetchProducts}
         showToast={showToast}
         onCategoryAdded={(cat) => setCategories(cs => [...cs, cat])}
+        onCategoryRemoved={(id) => setCategories(cs => cs.filter(c => c._id !== id))}
       />
 
       <ConfirmDialog
