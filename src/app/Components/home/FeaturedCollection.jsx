@@ -43,7 +43,7 @@ const FALLBACK_PRODUCTS = [
     category: { name: "22K Gold · Bangles" },
     description: "A set of three hand-finished bangles etched with celestial patterns — lightweight yet rich.",
     price: 34500,
-    comparePrice: null,
+    comparePrice: 36500,
     avgRating: 4.7,
     reviewCount: 56,
     isNewArrival: true,
@@ -70,7 +70,7 @@ export default function FeaturedCollection() {
   useEffect(() => {
     fetchFeaturedProducts(4).then((raw) => {
       if (raw.length > 0) {
-        setProducts(raw.map(normaliseProduct));
+        setProducts(raw.map(normaliseProduct));   // ← real backend data replaces your fallback
       }
     });
   }, []);
