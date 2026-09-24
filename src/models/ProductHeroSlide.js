@@ -29,13 +29,20 @@ const productHeroSlideSchema = new mongoose.Schema(
     // Mobile background image (Cloudinary URL) — falls back to `image` if blank
     mobileImage: { type: String, default: "" },
 
+    // Which products page this slide belongs to:
+    //   "all"                  → fallback shown on every products page that has no slides of its own
+    //   "products" | "shop" | "best-arrivals"
+    //   "category:<slug>"      → e.g. "category:rings"
+    //   "collection:<slug>"    → e.g. "collection:bridal-collection"
+    pageKey: { type: String, trim: true, lowercase: true, default: "all" },
+
     isActive: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
-productHeroSlideSchema.index({ sortOrder: 1, createdAt: 1 });
+productHeroSlideSchema.index({ pageKey: 1, sortOrder: 1, createdAt: 1 });
 
 const ProductHeroSlide = mongoose.model("ProductHeroSlide", productHeroSlideSchema);
 export default ProductHeroSlide;

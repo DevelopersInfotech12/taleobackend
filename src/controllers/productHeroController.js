@@ -15,6 +15,9 @@ const normaliseBody = (body) => {
   if (data.sortOrder !== undefined && data.sortOrder !== "") {
     data.sortOrder = Number(data.sortOrder) || 0;
   }
+  if (data.pageKey !== undefined) {
+    data.pageKey = String(data.pageKey).trim().toLowerCase() || "all";
+  }
   return data;
 };
 
@@ -46,10 +49,36 @@ const applyImages = async (data, files) => {
   return data;
 };
 
-/** GET /api/v1/product-hero — public (active only) unless ?includeInactive=true */
+// Slides created before pageKey existed have no value — treat them as global.
+const GLOBAL_KEYS = ["all", "", null];
+
+/**
+ * GET /api/v1/product-hero
+ *
+ * Public  : ?pageKey=category:rings
+ *           → active slides for that page; if it has none, falls back to the
+ *             global ("all") slides. No pageKey → global slides only.
+ * Admin   : ?includeInactive=true            → every slide
+ *           ?includeInactive=true&pageKey=x  → only that page's slides
+ */
 export const getProductHeroSlides = asyncHandler(async (req, res) => {
-  const filter = req.query.includeInactive ? {} : { isActive: true };
-  const slides = await ProductHeroSlide.find(filter).sort("sortOrder createdAt");
+  const pageKey = String(req.query.pageKey || "").trim().toLowerCase();
+  const sort = "sortOrder createdAt";
+
+  if (req.query.includeInactive) {
+    const filter = {};
+    if (pageKey === "all") filter.pageKey = { $in: GLOBAL_KEYS };
+    else if (pageKey) filter.pageKey = pageKey;
+    const slides = await ProductHeroSlide.find(filter).sort(sort);
+    return success(res, slides, "Product hero slides fetched");
+  }
+
+  if (pageKey && pageKey !== "all") {
+    const specific = await ProductHeroSlide.find({ isActive: true, pageKey }).sort(sort);
+    if (specific.length) return success(res, specific, "Product hero slides fetched");
+  }
+
+  const slides = await ProductHeroSlide.find({ isActive: true, pageKey: { $in: GLOBAL_KEYS } }).sort(sort);
   success(res, slides, "Product hero slides fetched");
 });
 
@@ -66,7 +95,7 @@ export const createProductHeroSlide = asyncHandler(async (req, res, next) => {
   if (!data.heading) return next(new AppError("Heading is required", 400));
 
   if (data.sortOrder === undefined || data.sortOrder === "") {
-    data.sortOrder = await ProductHeroSlide.countDocuments();
+    data.sortOrder = await ProductHeroSlide.countDocuments({ pageKey: data.pageKey || "all" });
   }
 
   const slide = await ProductHeroSlide.create(data);
